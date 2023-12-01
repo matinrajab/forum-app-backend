@@ -4,60 +4,34 @@ namespace App\Http\Controllers\Feed;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PostRequest;
-use App\Models\Feed;
-use App\Models\User;
+use App\Repositories\FeedRepository;
 
 class FeedController extends Controller
 {
+    private $feedRepository;
+
+    public function __construct()
+    {
+        $this->feedRepository = new FeedRepository();
+    }
+
     public function store(PostRequest $request)
     {
-        $request->validated();
-
-        Feed::create([
-            'user_id' => auth()->id(),
-            'content' => $request->content
-        ]);
-
-        return response([
-            'message' => 'Success'
-        ], 201);
+        return $this->feedRepository->store($request);
     }
 
     public function getFeeds()
     {
-        $feeds = Feed::with('user')->latest()->get();
-        return response([
-            'feeds' => $feeds
-        ], 200);
+        return $this->feedRepository->getFeeds();
     }
 
     public function getFeedsByUserId($user_id)
     {
-        $user = User::whereId($user_id)->first();
-        if (!$user) {
-            return response([
-                'message' => 'User not found'
-            ], 404);
-        }
-
-        $feeds = Feed::whereUserId($user_id)->with('user')->latest()->get();
-        return response([
-            'feeds' => $feeds
-        ], 200);
+        return $this->feedRepository->getFeedsByUserId($user_id);
     }
 
     public function getFeed($feed_id)
     {
-        $feed = Feed::whereId($feed_id)->with('user')->first();
-
-        if (!$feed) {
-            return response([
-                'message' => 'Feed not found'
-            ], 404);
-        }
-
-        return response([
-            'feed' => $feed
-        ], 200);
+        return $this->feedRepository->getFeed($feed_id);
     }
 }
