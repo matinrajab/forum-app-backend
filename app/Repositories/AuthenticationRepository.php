@@ -2,7 +2,6 @@
 
 namespace App\Repositories;
 
-use App\Http\Resources\AuthenticationResource;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
@@ -10,24 +9,28 @@ class AuthenticationRepository
 {
     public function register($request)
     {
-        $userData = [
-            'name' => $request->name,
-            'username' => $request->username,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ];
-        $user = User::create($userData);
-        return new AuthenticationResource($user);
+        $request->password = Hash::make($request->password);
+        return User::create($request->all());
     }
 
     public function login($request)
     {
-        $user = User::whereUsername($request->username)->first();
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response([
-                'message' => 'Invalid credentials'
-            ], 401);
-        }
-        return new AuthenticationResource($user);
+        $user = $this->getUser($request);
+        return $this->isVerified($request, $user) ? $user : null;
+    }
+
+    public function getUser($request)
+    {
+        return User::whereUsername($request->username)->first();
+    }
+
+    public function isVerified($request, $user)
+    {
+        return $user && Hash::check($request->password, $user->password);
+    }
+
+    public function logout($request)
+    {
+        $request->user()->currentAccessToken()->delete();
     }
 }

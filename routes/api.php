@@ -6,27 +6,32 @@ use App\Http\Controllers\Feed\FeedController;
 use App\Http\Controllers\Like\LikeController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
-*/
-
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/feed/store', [FeedController::class, 'store']);
-    Route::get('/feeds', [FeedController::class, 'getFeeds']);
-    Route::get('/feeds/user/{user_id}', [FeedController::class, 'getFeedsByUserId']);
-    Route::get('/feed/{feed_id}', [FeedController::class, 'getFeed']);
-    Route::post('/feed/like/{feed_id}', [LikeController::class, 'likePost']);
-    Route::get('/feed/likes/{feed_id}', [LikeController::class, 'getLikes']);
-    Route::post('/feed/comment/store/{feed_id}', [CommentController::class, 'store']);
-    Route::get('/feed/comments/{feed_id}', [CommentController::class, 'getComments']);
+    Route::prefix('feed')->controller(FeedController::class)->group(function () {
+        Route::get('/', 'getFeeds');
+        Route::post('store', 'store');
+        Route::get('user/{user_id}', 'getFeedsByUserId');
+        Route::get('{feed_id}', 'getFeed');
+        Route::put('{feed_id}', 'update')->middleware('feed.owner');
+        Route::delete('{feed_id}', 'delete')->middleware('feed.owner');
+    });
+
+    Route::prefix('comment')->controller(CommentController::class)->group(function () {
+        Route::post('store/{feed_id}', 'store');
+        Route::get('{feed_id}', 'getComments');
+        Route::put('{comment_id}', 'update')->middleware('comment.owner');
+        Route::delete('{comment_id}', 'delete')->middleware('comment.owner');
+    });
+
+    Route::prefix('like')->controller(LikeController::class)->group(function () {
+        Route::get('show/{feed_id}', 'getLikes');
+        Route::post('{feed_id}', 'likePost');
+    });
+
+    Route::get('/logout', [AuthenticationController::class, 'logout']);
 });
 
-Route::post('/register', [AuthenticationController::class, 'register']);
-Route::post('/login', [AuthenticationController::class, 'login']);
+Route::controller(AuthenticationController::class)->group(function () {
+    Route::post('register', 'register');
+    Route::post('login', 'login');
+});

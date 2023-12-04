@@ -2,40 +2,37 @@
 
 namespace App\Repositories;
 
-use App\Http\Resources\CommentResource;
 use App\Models\Comment;
 use App\Models\Feed;
 
 class CommentRepository
 {
-
     public function store($feed_id, $request)
     {
-        $feed = Feed::whereId($feed_id)->first();
-        if (!$feed) {
-            return response([
-                'message' => 'Feed not found'
-            ], 404);
-        }
+        Feed::whereId($feed_id)->firstOrFail();
         Comment::create([
             'user_id' => auth()->id(),
             'feed_id' => $feed_id,
             'content' => $request->content
         ]);
-        return response([
-            'message' => 'Comment success'
-        ], 201);
     }
 
     public function getComments($feed_id)
     {
-        $feed = Feed::whereId($feed_id)->first();
-        if (!$feed) {
-            return response([
-                'message' => 'Feed not found'
-            ], 404);
-        }
-        $comments = Comment::whereFeedId($feed_id)->get();
-        return CommentResource::collection($comments);
+        Feed::whereId($feed_id)->firstOrFail();
+        return Comment::whereFeedId($feed_id)->get();
+    }
+
+    public function update($comment_id, $request)
+    {
+        $comment = Comment::whereId($comment_id)->first();
+        $comment->update($request->all());
+        return $comment;
+    }
+
+    public function delete($comment_id)
+    {
+        $comment = Comment::whereId($comment_id)->first();
+        $comment->delete();
     }
 }
