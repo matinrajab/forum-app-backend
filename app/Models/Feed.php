@@ -16,23 +16,6 @@ class Feed extends Model
         'content',
     ];
 
-    protected $appends = ['liked', 'likes_count', 'comments_count'];
-
-    public function getLikedAttribute(): bool
-    {
-        return (bool) $this->likes()->where('feed_id', $this->id)->where('user_id', auth()->id())->exists();
-    }
-
-    public function getLikesCountAttribute(): int
-    {
-        return $this->likes()->count();
-    }
-
-    public function getCommentsCountAttribute(): int
-    {
-        return $this->comments()->count();
-    }
-
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

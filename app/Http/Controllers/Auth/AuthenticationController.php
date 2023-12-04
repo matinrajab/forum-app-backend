@@ -5,47 +5,34 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
-use App\Models\User;
-use Illuminate\Support\Facades\Hash;
+use App\Http\Resources\AuthenticationResource;
+use App\Repositories\AuthenticationRepository;
+use Illuminate\Http\Request;
 
 class AuthenticationController extends Controller
 {
+    private $authenticationRepository;
+
+    public function __construct(AuthenticationRepository $authenticationRepository)
+    {
+        $this->authenticationRepository = $authenticationRepository;
+    }
+
     public function register(RegisterRequest $request)
     {
-        $request->validated();
-
-        $userData = [
-            'name' => $request->name,
-            'username' => $request->username,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ];
-
-        $user = User::create($userData);
-        $token = $user->createToken('forum_app')->plainTextToken;
-
-        return response([
-            'user' => $user,
-            'token' => $token
-        ], 201);
+        $user = $this->authenticationRepository->register($request);
+        return new AuthenticationResource($user);
     }
 
     public function login(LoginRequest $request)
     {
-        $request->validated();
+        $user = $this->authenticationRepository->login($request);
+        return $user ? new AuthenticationResource($user) : $this->createResponse('Invalid credentials');
+    }
 
-        $user = User::whereUsername($request->username)->first();
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response([
-                'message' => 'Invalid credentials'
-            ], 401);
-        }
-
-        $token = $user->createToken('forum_app')->plainTextToken;
-
-        return response([
-            'user' => $user,
-            'token' => $token
-        ], 200);
+    public function logout(Request $request)
+    {
+        $this->authenticationRepository->logout($request);
+        return $this->createResponse('Logout success');
     }
 }

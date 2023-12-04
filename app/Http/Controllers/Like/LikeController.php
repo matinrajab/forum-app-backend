@@ -3,48 +3,27 @@
 namespace App\Http\Controllers\Like;
 
 use App\Http\Controllers\Controller;
-use App\Models\Feed;
-use App\Models\Like;
+use App\Http\Resources\LikeResource;
+use App\Repositories\LikeRepository;
 
 class LikeController extends Controller
 {
+    private $likeRepository;
+
+    public function __construct(LikeRepository $likeRepository)
+    {
+        $this->likeRepository = $likeRepository;
+    }
+
     public function likePost($feed_id)
     {
-        $feed = Feed::whereId($feed_id)->first();
-        if (!$feed) {
-            return response([
-                'message' => 'Feed not found'
-            ], 404);
-        }
-
-        $unlike = Like::where('user_id', auth()->id())->where('feed_id', $feed_id)->delete();
-        if ($unlike) {
-            return response([
-                'message' => 'Unliked'
-            ], 200);
-        }
-
-        Like::create([
-            'user_id' => auth()->id(),
-            'feed_id' => $feed_id
-        ]);
-        return response([
-            'message' => 'Liked'
-        ], 200);
+        $liked = $this->likeRepository->likePost($feed_id);
+        return $liked ? $this->createResponse('liked') : $this->createResponse('unliked');
     }
 
     public function getLikes($feed_id)
     {
-        $feed = Feed::whereId($feed_id)->first();
-        if (!$feed) {
-            return response([
-                'message' => 'Feed not found'
-            ], 404);
-        }
-
-        $likes = Like::whereFeedId($feed_id)->get();
-        return response([
-            'likes' => $likes
-        ], 200);
+        $likes = $this->likeRepository->getLikes($feed_id);
+        return LikeResource::collection($likes);
     }
 }

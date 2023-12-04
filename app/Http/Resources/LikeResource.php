@@ -1,0 +1,21 @@
+<?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class LikeResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'user_id' => $this->user_id,
+            'username' => $this->user->username,
+            'feed_id' => $this->feed_id,
+            'content' => $this->feed->content,
+            'created_at' => date_format($this->created_at, "Y/m/d"),
+        ];
+    }
+}

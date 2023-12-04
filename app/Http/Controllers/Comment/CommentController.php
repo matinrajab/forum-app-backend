@@ -4,47 +4,39 @@ namespace App\Http\Controllers\Comment;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CommentRequest;
-use App\Models\Comment;
-use App\Models\Feed;
+use App\Http\Resources\CommentResource;
+use App\Repositories\CommentRepository;
 
 class CommentController extends Controller
 {
+    private $commentRepository;
+
+    public function __construct(CommentRepository $commentRepository)
+    {
+        $this->commentRepository = $commentRepository;
+    }
+
     public function store($feed_id, CommentRequest $request)
     {
-        $request->validated();
-
-        $feed = Feed::whereId($feed_id)->first();
-        if (!$feed) {
-            return response([
-                'message' => 'Feed not found'
-            ], 404);
-        }
-
-        Comment::create([
-            'user_id' => auth()->id(),
-            'feed_id' => $feed_id,
-            'content' => $request->content
-        ]);
-
-        return response([
-            'message' => 'Comment success'
-        ], 201);
+        $this->commentRepository->store($feed_id, $request);
+        return $this->createResponse('Comment success');
     }
 
     public function getComments($feed_id)
     {
-        $feed = Feed::whereId($feed_id)->first();
+        $comments = $this->commentRepository->getComments($feed_id);
+        return CommentResource::collection($comments);
+    }
 
-        if (!$feed) {
-            return response([
-                'message' => 'Feed not found'
-            ], 404);
-        }
+    public function update($comment_id, CommentRequest $request)
+    {
+        $comment = $this->commentRepository->update($comment_id, $request);
+        return new CommentResource($comment);
+    }
 
-        $comments = Comment::whereFeedId($feed_id)->with('user')->get();
-
-        return response([
-            'comments' => $comments
-        ], 200);
+    public function delete($comment_id)
+    {
+        $this->commentRepository->delete($comment_id);
+        return $this->createResponse('Delete success');
     }
 }
