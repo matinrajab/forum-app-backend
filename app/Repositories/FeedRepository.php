@@ -5,9 +5,6 @@ namespace App\Repositories;
 use App\Models\Feed;
 use App\Models\User;
 
-const COMMENT_ATRIBUTE = 'comments:id,feed_id';
-const LIKE_ATRIBUTE = 'likes:id,feed_id';
-
 class FeedRepository
 {
     public function store($request)
